@@ -13,7 +13,7 @@ use clap::Parser;
 use futures_util::stream::{Stream, StreamExt};
 use local_ip_address::local_ip;
 use notify::Watcher;
-use pulldown_cmark::{html, Event, Options, Parser as MdParser};
+use pulldown_cmark::{html, CowStr, Event, Options, Parser as MdParser};
 use tokio::sync::{broadcast, RwLock};
 use warp::{sse, Filter};
 
@@ -217,12 +217,7 @@ fn read_markdown_input(file_path: &PathBuf) -> io::Result<String> {
 }
 
 fn render_markdown_to_html(markdown_input: &str) -> String {
-    let mut options = Options::empty();
-    options.insert(Options::ENABLE_STRIKETHROUGH);
-    options.insert(Options::ENABLE_TABLES);
-    options.insert(Options::ENABLE_FOOTNOTES);
-    options.insert(Options::ENABLE_TASKLISTS);
-    options.insert(Options::ENABLE_SMART_PUNCTUATION);
+    let mut options = Options::all();
 
     let parser = MdParser::new_ext(&markdown_input, options);
     let mut html_output = String::new();
@@ -230,6 +225,17 @@ fn render_markdown_to_html(markdown_input: &str) -> String {
         &mut html_output,
         parser.map(|event| match event {
             Event::SoftBreak => Event::Html("<br>".into()),
+            Event::InlineMath(s) => {
+                let mut str = String::from("<span class=\"math math-inline\">$");
+                str.push_str(&s.into_string());
+                str.push_str("$</span>");
+                Event::Html(CowStr::from(str))
+            },
+            Event::DisplayMath(s) => {
+                let mut str = String::from("<span class=\"math math-display\">$$");
+                str.push_str(&s.into_string());
+                str.push_str("$$</span>");
+                Event::Html(CowStr::from(str))},
             _ => event,
         }),
     );
@@ -399,6 +405,14 @@ fn build_full_html(
                 document.body.appendChild(container);
             }}
         }});
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {{
+      tex: {{
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }}
+    }};
     </script>
     <style>
         @font-face {{
