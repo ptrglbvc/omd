@@ -10,8 +10,6 @@ use std::time::Duration;
 
 use base64::encode;
 use clap::Parser;
-use clipboard::ClipboardContext;
-use clipboard::ClipboardProvider;
 use futures_util::stream::{Stream, StreamExt};
 use local_ip_address::local_ip;
 use notify::Watcher;
@@ -61,8 +59,8 @@ async fn main() -> io::Result<()> {
 
 fn run_static_mode(args: &Args) -> io::Result<()> {
     let (file_name, markdown_input) = if args.clipboard {
-        let mut clipboard: ClipboardContext = ClipboardProvider::new().unwrap();
-        let content = clipboard.get_contents().unwrap_or_else(|err| {
+        let mut clipboard = arboard::Clipboard::new().unwrap();
+        let content = clipboard.get_text().unwrap_or_else(|err| {
             eprintln!("Error reading from clipboard: {}", err);
             std::process::exit(1);
         });
@@ -167,8 +165,8 @@ fn event_stream(rx: broadcast::Receiver<()>) -> EventStream {
 
 async fn run_server_mode(args: &Args) -> io::Result<()> {
     let (file_path, file_name, markdown_input) = if args.clipboard {
-        let mut clipboard: ClipboardContext = ClipboardProvider::new().unwrap();
-        let content = clipboard.get_contents().unwrap_or_else(|err| {
+        let mut clipboard = arboard::Clipboard::new().unwrap();
+        let content = clipboard.get_text().unwrap_or_else(|err| {
             eprintln!("Error reading from clipboard: {}", err);
             std::process::exit(1);
         });

@@ -137,6 +137,10 @@ Contributions are welcome! Please follow these steps:
 
 Please make sure to update tests as appropriate.
 
+## Contributors
+
+[davehorner](https://github.com/davehorner/) - v0.2.3 - lib interface, tracing, example, removal of clipboard and replacement with arboard, other things.
+
 ## Acknowledgments
 
 - Thanks to the Rust community for their amazing crates that make projects like this possible.
